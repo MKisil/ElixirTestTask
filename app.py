@@ -175,19 +175,23 @@ def main():
 
         use_voice = st.checkbox("Enable voice input", value=True)
 
+        if "voice_text" not in st.session_state:
+            st.session_state.voice_text = ""
+
         if use_voice:
-            st.write("Click 'Start Listening' and speak your question:")
-            speech_text = speech_recognition_component()
+            speech_recognition_component()
+            if st.session_state.get("speech_component") and st.session_state.speech_component:
+                st.session_state.voice_text = st.session_state.speech_component
+                st.session_state.speech_component = ""
 
-            if speech_text:
-                st.session_state['voice_text'] = speech_text
+        question = st.text_input(
+            "Ask about the image:",
+            value=st.session_state.voice_text,
+            key="question_input"
+        )
 
-        question = st.text_input("Type your question or speak:",
-                                 value=st.session_state['voice_text'],
-                                 key="question-input")
-
-        if st.session_state['voice_text'] and question == st.session_state['voice_text']:
-            st.session_state['voice_text'] = ""
+        if question != st.session_state.voice_text:
+            st.session_state.voice_text = question
 
         send_button = st.button("Send")
 
@@ -197,7 +201,6 @@ def main():
 
                 try:
                     answer = analyze_image(model, gemini_image, question)
-
                     st.session_state['chat_history'].append({"role": "assistant", "content": answer})
                 except Exception as e:
                     st.error(f"Error processing image: {str(e)}")
